@@ -1,0 +1,36 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "vuln_01",
+      "type": "SQL Injection",
+      "file": "sample.py",
+      "sink_line": 8,
+      "source_line": 32,
+      "message": "Posible SQL Injection en login_inseguro()"
+    },
+    {
+      "id": "vuln_02",
+      "type": "SQL Injection",
+      "file": "sample.py",
+      "sink_line": 15,
+      "source_line": 32,
+      "message": "Posible SQL Injection en login_seguro()"
+    },
+    {
+      "id": "vuln_03",
+      "type": "SSRF",
+      "file": "sample.py",
+      "sink_line": 21,
+      "source_line": 32,
+      "message": "Posible SSRF en check_username_github()"
+    },
+    {
+      "id": "vuln_04",
+      "type": "Command Injection",
+      "file": "sample.py",
+      "sink_line": 28,
+      "source_line": 32,
+      "message": "Posible Command Injection en crear_archivo_temporal()"
+    }
+  ]
+}

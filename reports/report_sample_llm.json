@@ -1,0 +1,104 @@
+{
+  "input_findings": "sample/findings.json",
+  "project_path": "sample/app",
+  "use_llm_requested": false,
+  "llm_used_effective": false,
+  "results": [
+    {
+      "id": "vuln_01",
+      "type": "SQL Injection",
+      "message": "Posible SQL Injection en login_inseguro()",
+      "status": "True Positive",
+      "severity": "High",
+      "explanation": "La consulta SQL se construye concatenando/interpolando parámetros de usuario directamente en el string.",
+      "evidence": [
+        {
+          "kind": "sink",
+          "file": "sample.py",
+          "line": 8,
+          "snippet": "   3: import os\n   4: \n   5: def login_inseguro(con, username, password):\n   6:     \"\"\"Ejemplo de SQL Injection INSEGURO.\"\"\"\n   7:     cur = con.cursor()\n   8:     query = f\"SELECT id FROM users WHERE username = '{username}' AND password = '{password}'\"\n   9:     cur.execute(query)\n  10:     return cur.fetchone()\n  11: \n  12: def login_seguro(con, username, password):\n  13:     \"\"\"Ejemplo de consulta SQL SEGURA usando parámetros.\"\"\""
+        },
+        {
+          "kind": "source",
+          "file": "sample.py",
+          "line": 32,
+          "snippet": "  27:     comando = f\"touch /tmp/{username}\"\n  28:     os.system(comando)\n  29: \n  30: if __name__ == \"__main__\":\n  31:     con = sqlite3.connect(\":memory:\")\n  32:     username = input(\"Usuario: \")\n  33:     password = input(\"Contraseña: \")\n  34:     print(\"Login inseguro:\")\n  35:     print(login_inseguro(con, username, password))\n  36:     print(\"Login seguro:\")\n  37:     print(login_seguro(con, username, password))"
+        }
+      ],
+      "llm_used": false,
+      "llm_status": "skipped"
+    },
+    {
+      "id": "vuln_02",
+      "type": "SQL Injection",
+      "message": "Posible SQL Injection en login_seguro()",
+      "status": "False Positive",
+      "severity": "None",
+      "explanation": "La consulta usa parámetros (?) en cur.execute, lo que mitiga SQL Injection.",
+      "evidence": [
+        {
+          "kind": "sink",
+          "file": "sample.py",
+          "line": 15,
+          "snippet": "  10:     return cur.fetchone()\n  11: \n  12: def login_seguro(con, username, password):\n  13:     \"\"\"Ejemplo de consulta SQL SEGURA usando parámetros.\"\"\"\n  14:     cur = con.cursor()\n  15:     query = \"SELECT id FROM users WHERE username = ? AND password = ?\"\n  16:     cur.execute(query, (username, password))\n  17:     return cur.fetchone()\n  18: \n  19: def check_username_github(username):\n  20:     \"\"\"Ejemplo de posible SSRF pero con dominio fijo (api.github.com).\"\"\""
+        },
+        {
+          "kind": "source",
+          "file": "sample.py",
+          "line": 32,
+          "snippet": "  27:     comando = f\"touch /tmp/{username}\"\n  28:     os.system(comando)\n  29: \n  30: if __name__ == \"__main__\":\n  31:     con = sqlite3.connect(\":memory:\")\n  32:     username = input(\"Usuario: \")\n  33:     password = input(\"Contraseña: \")\n  34:     print(\"Login inseguro:\")\n  35:     print(login_inseguro(con, username, password))\n  36:     print(\"Login seguro:\")\n  37:     print(login_seguro(con, username, password))"
+        }
+      ],
+      "llm_used": false,
+      "llm_status": "skipped"
+    },
+    {
+      "id": "vuln_03",
+      "type": "SSRF",
+      "message": "Posible SSRF en check_username_github()",
+      "status": "False Positive",
+      "severity": "None",
+      "explanation": "La petición se hace a un dominio fijo (api.github.com); el usuario solo controla el path.",
+      "evidence": [
+        {
+          "kind": "sink",
+          "file": "sample.py",
+          "line": 21,
+          "snippet": "  16:     cur.execute(query, (username, password))\n  17:     return cur.fetchone()\n  18: \n  19: def check_username_github(username):\n  20:     \"\"\"Ejemplo de posible SSRF pero con dominio fijo (api.github.com).\"\"\"\n  21:     url = f\"https://api.github.com/users/{username}\"\n  22:     response = requests.get(url)\n  23:     return response.status_code == 200\n  24: \n  25: def crear_archivo_temporal(username):\n  26:     \"\"\"Ejemplo de Command Injection con os.system.\"\"\""
+        },
+        {
+          "kind": "source",
+          "file": "sample.py",
+          "line": 32,
+          "snippet": "  27:     comando = f\"touch /tmp/{username}\"\n  28:     os.system(comando)\n  29: \n  30: if __name__ == \"__main__\":\n  31:     con = sqlite3.connect(\":memory:\")\n  32:     username = input(\"Usuario: \")\n  33:     password = input(\"Contraseña: \")\n  34:     print(\"Login inseguro:\")\n  35:     print(login_inseguro(con, username, password))\n  36:     print(\"Login seguro:\")\n  37:     print(login_seguro(con, username, password))"
+        }
+      ],
+      "llm_used": false,
+      "llm_status": "skipped"
+    },
+    {
+      "id": "vuln_04",
+      "type": "Command Injection",
+      "message": "Posible Command Injection en crear_archivo_temporal()",
+      "status": "True Positive",
+      "severity": "High",
+      "explanation": "Se usa os.system con un comando que incluye directamente valores interpolados (f-strings/concatenación) controlados por el usuario.",
+      "evidence": [
+        {
+          "kind": "sink",
+          "file": "sample.py",
+          "line": 28,
+          "snippet": "  23:     return response.status_code == 200\n  24: \n  25: def crear_archivo_temporal(username):\n  26:     \"\"\"Ejemplo de Command Injection con os.system.\"\"\"\n  27:     comando = f\"touch /tmp/{username}\"\n  28:     os.system(comando)\n  29: \n  30: if __name__ == \"__main__\":\n  31:     con = sqlite3.connect(\":memory:\")\n  32:     username = input(\"Usuario: \")\n  33:     password = input(\"Contraseña: \")"
+        },
+        {
+          "kind": "source",
+          "file": "sample.py",
+          "line": 32,
+          "snippet": "  27:     comando = f\"touch /tmp/{username}\"\n  28:     os.system(comando)\n  29: \n  30: if __name__ == \"__main__\":\n  31:     con = sqlite3.connect(\":memory:\")\n  32:     username = input(\"Usuario: \")\n  33:     password = input(\"Contraseña: \")\n  34:     print(\"Login inseguro:\")\n  35:     print(login_inseguro(con, username, password))\n  36:     print(\"Login seguro:\")\n  37:     print(login_seguro(con, username, password))"
+        }
+      ],
+      "llm_used": false,
+      "llm_status": "skipped"
+    }
+  ]
+}
